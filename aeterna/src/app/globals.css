@@ -1,0 +1,20 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-bg: #050505;
+  --color-brand-indigo: #1a1a2e;
+  --color-brand-gold: #2c2412;
+}
+
+@layer base {
+  body {
+    background-color: var(--color-brand-bg);
+    color: white;
+  }
+}
+
+.mesh-bg {
+  background-image: radial-gradient(at 100% 0%, var(--color-brand-indigo) 0px, transparent 50%),
+                    radial-gradient(at 0% 100%, var(--color-brand-gold) 0px, transparent 50%);
+  background-attachment: fixed;
+}

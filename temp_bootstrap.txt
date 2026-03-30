@@ -1,0 +1,36 @@
+﻿/* ── Bootstrap ─────────────────────────────────────────────── */
+async function bootstrap() {
+  // 1. Sync setup (no blocking)
+  setupNavigation();
+  setupSearch();
+  setupFilterChips();
+  setupWindowControlsOverlay();
+  setupKeyboardShortcuts();
+  setupShareButtons();
+
+  // Show UI instantly using defaults (prevents infinite loading skeleton)
+  renderView('today');
+
+  // 2. Async setup with failsafe timeouts
+  try {
+    const withTimeout = (prom, ms) => Promise.race([
+      prom, 
+      new Promise((_, rej) => setTimeout(() => reject(new Error('timeout')), ms))
+    ]);
+    await Promise.allSettled([
+      withTimeout(registerServiceWorker(), 4000),
+      withTimeout(initDB(), 4000)
+    ]);
+  } catch(e) {
+    console.warn("Init timeout or error:", e);
+  }
+
+  // 3. Post-DB setup
+  setupInstallPrompt();
+  setupThemeColor();
+  applyAccessibilityPreferences();
+  refreshOnOpen();
+
+  // 4. Re-render UI with updated state (DB loaded language, streak, favorites)
+  renderView(state.currentView);
+}
