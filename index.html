@@ -195,10 +195,24 @@
             </select>
           </div>
           <div class="settings-row">
+            <span class="settings-label" id="label-text-size">Reading Size</span>
+            <select id="setting-text-size" class="glass-select" aria-label="Select reading text size">
+              <option value="compact">Compact</option>
+              <option value="comfortable">Comfortable</option>
+              <option value="large">Large</option>
+            </select>
+          </div>
+          <div class="settings-row">
             <span class="settings-label" id="label-daily-notif">Daily Notifications</span>
             <div class="toggle" id="setting-notifications"
                  role="switch" aria-checked="false"
                  tabindex="0" aria-label="Toggle daily notifications"></div>
+          </div>
+          <div class="settings-row">
+            <span class="settings-label" id="label-readability">High Readability Mode</span>
+            <div class="toggle" id="setting-readability"
+                 role="switch" aria-checked="false"
+                 tabindex="0" aria-label="Toggle high readability mode"></div>
           </div>
           <div class="settings-row">
             <span class="settings-label">Version</span>
@@ -239,6 +253,10 @@
           <div class="settings-row">
             <span class="settings-label">Service Worker</span>
             <span class="settings-value" id="sw-status">Checking…</span>
+          </div>
+          <div class="settings-row">
+            <span class="settings-label">Shortcuts</span>
+            <span class="settings-value">Alt+1..4, /, R</span>
           </div>
         </div>
       </div>

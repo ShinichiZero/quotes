@@ -42,6 +42,55 @@ function safeScriptURL(s) {
 const MS_PER_DAY = 86_400_000;
 const $ = (sel, ctx = document) => ctx.querySelector(sel);
 const $$ = (sel, ctx = document) => [...ctx.querySelectorAll(sel)];
+const TAB_VIEWS = ['today', 'browse', 'favorites', 'settings'];
+
+function getLocalDayKey(date = new Date()) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+function dayDiff(previousDay, currentDay) {
+  const previous = new Date(`${previousDay}T00:00:00`);
+  const current  = new Date(`${currentDay}T00:00:00`);
+  return Math.round((current - previous) / MS_PER_DAY);
+}
+
+function hashString(value) {
+  let hash = 0;
+  for (let i = 0; i < value.length; i += 1) {
+    hash = ((hash << 5) - hash) + value.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash);
+}
+
+function getDailyQuoteIndex(dayKey = getLocalDayKey()) {
+  if (!QUOTES.length) return 0;
+  return hashString(dayKey) % QUOTES.length;
+}
+
+function getCurrentLocale() {
+  return translations[state.language] ? state.language : 'en';
+}
+
+function getDisplayQuoteText(quote) {
+  return (getCurrentLocale() === 'it' && quote.textIt) ? quote.textIt : quote.text;
+}
+
+function isTypingTarget(el) {
+  return !!el && (
+    el.tagName === 'INPUT' ||
+    el.tagName === 'TEXTAREA' ||
+    el.isContentEditable
+  );
+}
+
+function applyAccessibilityPreferences() {
+  document.documentElement.setAttribute('data-text-size', state.textSize);
+  document.body.classList.toggle('readability-mode', state.readability);
+}
 
 /* ── State ─────────────────────────────────────────────────── */
 const state = {
@@ -52,6 +101,11 @@ const state = {
   deferredPrompt: null,
   verifiedQuotes: false,
   language:       'en',
+  manualQuoteId:  null,
+  streak:         0,
+  lastVisitDay:   '',
+  textSize:       'comfortable',
+  readability:    false,
 };
 
 /* ── Bootstrap ─────────────────────────────────────────────── */
@@ -67,6 +121,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupFilterChips();
   setupWindowControlsOverlay();
   setupThemeColor();
+  setupKeyboardShortcuts();
+  applyAccessibilityPreferences();
   setupShareButtons();
   refreshOnOpen();
 
@@ -127,9 +183,36 @@ async function initDB() {
 
   // Load language preference
   state.language = await getSetting('language', 'en');
+  state.textSize = await getSetting('textSize', 'comfortable');
+  state.readability = await getSetting('readability', false);
+  state.streak = await getSetting('dailyStreak', 0);
+  state.lastVisitDay = await getSetting('lastVisitDay', '');
+
+  await ensureDailyStreak();
 
   // Verify quote integrity
   await verifyQuoteIntegrity();
+}
+
+async function ensureDailyStreak() {
+  const today = getLocalDayKey();
+  if (state.lastVisitDay === today) {
+    if (!state.streak) state.streak = 1;
+    return;
+  }
+
+  if (!state.lastVisitDay) {
+    state.streak = 1;
+  } else {
+    const delta = dayDiff(state.lastVisitDay, today);
+    state.streak = delta === 1 ? (state.streak + 1) : 1;
+  }
+
+  state.lastVisitDay = today;
+  await Promise.all([
+    setSetting('dailyStreak', state.streak),
+    setSetting('lastVisitDay', state.lastVisitDay),
+  ]);
 }
 
 /* ── Quote Integrity Verification ─────────────────────────── */
@@ -190,32 +273,74 @@ function navigateTo(view) {
 const translations = {
   en: {
     today: "Today's Quote",
+    navToday: 'Today',
     browse: "Browse Quotes",
+    navBrowse: 'Browse',
     favorites: "Favorites",
+    navFavorites: 'Saved',
     settings: "Settings",
+    navSettings: 'Settings',
     search: "Search saints, quotes…",
     searchLbl: "Search quotes",
     installBtn: "Install",
     installTxt: "Install <strong>Saints &amp; Wisdom</strong> for an offline experience!",
     emptyFav: "No favorites yet.<br>Tap the star on any quote to save it.",
-    emptySearch: "No quotes match your search."
+    emptySearch: "No quotes match your search.",
+    noRelated: 'No related quotes available for this category yet.',
+    newInspiration: 'Another Inspiration',
+    streakLabel: '🔥 {count}-day reflection streak',
+    appLabel: 'App',
+    languageLabel: 'Language',
+    dailyNotifLabel: 'Daily Notifications',
+    textSizeLabel: 'Reading Size',
+    readabilityLabel: 'High Readability Mode',
+    compact: 'Compact',
+    comfortable: 'Comfortable',
+    large: 'Large',
+    addedFavorite: '⭐ Added to favorites',
+    removedFavorite: 'Removed from favorites',
+    quoteShareCopied: '📋 Quote copied to clipboard',
+    quoteShareUnavailable: 'Share is not available on this browser',
+    integrityVerified: '✅ Integrity verified',
+    integrityWarning: '⚠️ Unverified',
   },
   it: {
     today: "Frase del Giorno",
+    navToday: 'Oggi',
     browse: "Esplora",
+    navBrowse: 'Esplora',
     favorites: "Preferiti",
+    navFavorites: 'Salvati',
     settings: "Impostazioni",
+    navSettings: 'Impost.',
     search: "Cerca santi, frasi…",
     searchLbl: "Cerca frasi",
     installBtn: "Installa",
     installTxt: "Installa <strong>Saints &amp; Wisdom</strong> per usarlo offline!",
     emptyFav: "Nessun preferito.<br>Tocca la stella su una frase per salvarla.",
-    emptySearch: "Nessuna frase corrisponde alla ricerca."
+    emptySearch: "Nessuna frase corrisponde alla ricerca.",
+    noRelated: 'Nessuna frase correlata disponibile per questa categoria.',
+    newInspiration: 'Nuova Ispirazione',
+    streakLabel: '🔥 Serie di riflessione: {count} giorni',
+    appLabel: 'App',
+    languageLabel: 'Lingua',
+    dailyNotifLabel: 'Notifiche Giornaliere',
+    textSizeLabel: 'Dimensione Lettura',
+    readabilityLabel: 'Modalita Alta Leggibilita',
+    compact: 'Compatta',
+    comfortable: 'Confortevole',
+    large: 'Grande',
+    addedFavorite: '⭐ Aggiunto ai preferiti',
+    removedFavorite: 'Rimosso dai preferiti',
+    quoteShareCopied: '📋 Frase copiata negli appunti',
+    quoteShareUnavailable: 'Condivisione non disponibile in questo browser',
+    integrityVerified: '✅ Integrita verificata',
+    integrityWarning: '⚠️ Non verificato',
   }
 };
 
 function updateUITexts() {
-  const t = translations[state.language];
+  const t = translations[getCurrentLocale()];
   const $ = (s) => document.querySelector(s);
   
   if ($('#today-heading')) $('#today-heading').innerHTML = `<span aria-hidden="true">☀️</span> ${t.today}`;
@@ -231,17 +356,26 @@ function updateUITexts() {
   if ($('#install-txt')) $('#install-txt').innerHTML = t.installTxt;
   if ($('#install-btn')) $('#install-btn').textContent = t.installBtn;
 
-  if ($('#label-app-settings')) $('#label-app-settings').textContent = t.settings === 'Impostazioni' ? 'App' : 'App';
-  if ($('#label-language')) $('#label-language').textContent = t.settings === 'Impostazioni' ? 'Lingua' : 'Language';
-  if ($('#label-daily-notif')) $('#label-daily-notif').textContent = t.settings === 'Impostazioni' ? 'Notifiche Giornaliere' : 'Daily Notifications';
+  if ($('#label-app-settings')) $('#label-app-settings').textContent = t.appLabel;
+  if ($('#label-language')) $('#label-language').textContent = t.languageLabel;
+  if ($('#label-daily-notif')) $('#label-daily-notif').textContent = t.dailyNotifLabel;
+  if ($('#label-text-size')) $('#label-text-size').textContent = t.textSizeLabel;
+  if ($('#label-readability')) $('#label-readability').textContent = t.readabilityLabel;
+
+  const textSizeSelect = $('#setting-text-size');
+  if (textSizeSelect?.options?.length >= 3) {
+    textSizeSelect.options[0].textContent = t.compact;
+    textSizeSelect.options[1].textContent = t.comfortable;
+    textSizeSelect.options[2].textContent = t.large;
+  }
   
   // Also update bottom nav
   const navItems = document.querySelectorAll('.nav-label');
   if (navItems.length >= 4) {
-    navItems[0].textContent = t.today;
-    navItems[1].textContent = t.browse;
-    navItems[2].textContent = t.favorites;
-    navItems[3].textContent = t.settings;
+    navItems[0].textContent = t.navToday;
+    navItems[1].textContent = t.navBrowse;
+    navItems[2].textContent = t.navFavorites;
+    navItems[3].textContent = t.navSettings;
   }
 }
 
@@ -266,20 +400,48 @@ function renderToday() {
   const container = $('#today-container');
   if (!container) return;
 
+  const t = translations[getCurrentLocale()];
+
   // Pick a deterministic daily quote
-  const dayIndex = Math.floor(Date.now() / MS_PER_DAY) % QUOTES.length;
-  const hero     = QUOTES[dayIndex];
+  const dayIndex = state.manualQuoteId
+    ? QUOTES.findIndex(q => q.id === state.manualQuoteId)
+    : getDailyQuoteIndex();
+  const hero = QUOTES[dayIndex >= 0 ? dayIndex : 0];
+
+  if (!hero) {
+    container.innerHTML = safeHTML('<p class="empty-state">No quotes available.</p>');
+    return;
+  }
+
   // Pick 3 related quotes (same category)
   const related  = QUOTES
     .filter(q => q.category === hero.category && q.id !== hero.id)
     .slice(0, 3);
 
+  const streakLabel = t.streakLabel.replace('{count}', String(state.streak));
+
   container.innerHTML = safeHTML(`
+    <div class="today-toolbar glass glass-sm">
+      <button class="btn-secondary" id="today-reroll-btn" type="button">${escText(t.newInspiration)}</button>
+      <p class="today-streak">${escText(streakLabel)}</p>
+    </div>
     <div class="quote-grid">
       ${buildHeroCard(hero)}
-      ${related.map(buildQuoteCard).join('')}
+      ${related.length
+        ? related.map(buildQuoteCard).join('')
+        : `<p class="related-empty">${escText(t.noRelated)}</p>`}
     </div>
   `);
+
+  const rerollBtn = $('#today-reroll-btn', container);
+  if (rerollBtn) {
+    rerollBtn.addEventListener('click', () => {
+      const candidates = QUOTES.filter(q => q.id !== hero.id);
+      const next = candidates[Math.floor(Math.random() * candidates.length)] ?? hero;
+      state.manualQuoteId = next.id;
+      renderToday();
+    });
+  }
 
   attachCardListeners(container);
 }
@@ -288,12 +450,13 @@ function renderToday() {
 function renderBrowse() {
   const container = $('#browse-container');
   if (!container) return;
+  const t = translations[getCurrentLocale()];
 
   const filtered = getFilteredQuotes();
   container.innerHTML = safeHTML(
     filtered.length
       ? `<div class="quote-grid">${filtered.map(buildQuoteCard).join('')}</div>`
-      : `<div class="empty-state"><span class="empty-icon">🔍</span><p>${translations[state.language].emptySearch}</p></div>`
+      : `<div class="empty-state"><span class="empty-icon">🔍</span><p>${t.emptySearch}</p></div>`
   );
 
   attachCardListeners(container);
@@ -303,6 +466,7 @@ function renderBrowse() {
 async function renderFavorites() {
   const container = $('#favorites-container');
   if (!container) return;
+  const t = translations[getCurrentLocale()];
 
   const favIds = [...state.favorites];
   const favQuotes = QUOTES.filter(q => favIds.includes(q.id));
@@ -310,7 +474,7 @@ async function renderFavorites() {
   container.innerHTML = safeHTML(
     favQuotes.length
       ? `<div class="quote-grid">${favQuotes.map(buildQuoteCard).join('')}</div>`
-      : `<div class="empty-state"><span class="empty-icon">⭐</span><p>${translations[state.language].emptyFav}</p></div>`
+      : `<div class="empty-state"><span class="empty-icon">⭐</span><p>${t.emptyFav}</p></div>`
   );
 
   attachCardListeners(container);
@@ -318,31 +482,87 @@ async function renderFavorites() {
 
 /* ── Settings View ─────────────────────────────────────────── */
 async function renderSettings() {
+  const t = translations[getCurrentLocale()];
+
   // Settings are rendered statically in HTML; just wire up toggles
   const notificationsOn = await getSetting('notifications', false);
-  const language        = state.language;
+  const language        = getCurrentLocale();
 
   const langSelect = $('#setting-language');
   if (langSelect) {
     langSelect.value = language;
-    langSelect.addEventListener('change', async (e) => {
-      state.language = e.target.value;
-      await setSetting('language', state.language);
-      
-      // Re-render UI to update text immediately
-      setupFilterChips();
-      renderView(state.currentView);
-    });
+    if (!langSelect.dataset.bound) {
+      langSelect.dataset.bound = '1';
+      langSelect.addEventListener('change', async (e) => {
+        state.language = e.target.value;
+        await setSetting('language', state.language);
+
+        // Re-render UI to update text immediately
+        setupFilterChips();
+        renderView(state.currentView);
+      });
+    }
+  }
+
+  const textSizeSelect = $('#setting-text-size');
+  if (textSizeSelect) {
+    textSizeSelect.value = state.textSize;
+    if (!textSizeSelect.dataset.bound) {
+      textSizeSelect.dataset.bound = '1';
+      textSizeSelect.addEventListener('change', async (e) => {
+        state.textSize = e.target.value;
+        await setSetting('textSize', state.textSize);
+        applyAccessibilityPreferences();
+      });
+    }
   }
 
   const notifToggle = $('#setting-notifications');
   if (notifToggle) {
     notifToggle.classList.toggle('on', notificationsOn);
-    notifToggle.addEventListener('click', async () => {
-      const next = !notifToggle.classList.contains('on');
-      notifToggle.classList.toggle('on', next);
-      await setSetting('notifications', next);
-    });
+    notifToggle.setAttribute('aria-checked', String(notificationsOn));
+    if (!notifToggle.dataset.bound) {
+      notifToggle.dataset.bound = '1';
+      notifToggle.addEventListener('click', async () => {
+        const next = !notifToggle.classList.contains('on');
+        notifToggle.classList.toggle('on', next);
+        notifToggle.setAttribute('aria-checked', String(next));
+        await setSetting('notifications', next);
+      });
+      notifToggle.addEventListener('keydown', async (e) => {
+        if (e.key !== ' ' && e.key !== 'Enter') return;
+        e.preventDefault();
+        const next = !notifToggle.classList.contains('on');
+        notifToggle.classList.toggle('on', next);
+        notifToggle.setAttribute('aria-checked', String(next));
+        await setSetting('notifications', next);
+      });
+    }
+  }
+
+  const readabilityToggle = $('#setting-readability');
+  if (readabilityToggle) {
+    readabilityToggle.classList.toggle('on', state.readability);
+    readabilityToggle.setAttribute('aria-checked', String(state.readability));
+    if (!readabilityToggle.dataset.bound) {
+      readabilityToggle.dataset.bound = '1';
+      readabilityToggle.addEventListener('click', async () => {
+        state.readability = !state.readability;
+        readabilityToggle.classList.toggle('on', state.readability);
+        readabilityToggle.setAttribute('aria-checked', String(state.readability));
+        await setSetting('readability', state.readability);
+        applyAccessibilityPreferences();
+      });
+      readabilityToggle.addEventListener('keydown', async (e) => {
+        if (e.key !== ' ' && e.key !== 'Enter') return;
+        e.preventDefault();
+        state.readability = !state.readability;
+        readabilityToggle.classList.toggle('on', state.readability);
+        readabilityToggle.setAttribute('aria-checked', String(state.readability));
+        await setSetting('readability', state.readability);
+        applyAccessibilityPreferences();
+      });
+    }
   }
 
   const versionEl = $('#app-version');
@@ -352,7 +572,7 @@ async function renderSettings() {
 
   const verifiedEl = $('#verified-status');
   if (verifiedEl) {
-    verifiedEl.textContent = state.verifiedQuotes ? '✅ Integrity verified' : '⚠️ Unverified';
+    verifiedEl.textContent = state.verifiedQuotes ? t.integrityVerified : t.integrityWarning;
     verifiedEl.className = 'settings-value ' + (state.verifiedQuotes ? 'verified-ok' : 'verified-warn');
   }
 }
@@ -360,7 +580,7 @@ async function renderSettings() {
 /* ── Quote Card Builders ────────────────────────────────────── */
 function buildHeroCard(q) {
   const favClass = state.favorites.has(q.id) ? 'active' : '';
-  const textToShow = (state.language === 'it' && q.textIt) ? q.textIt : q.text;
+  const textToShow = getDisplayQuoteText(q);
   return `
     <article class="quote-card quote-hero glass glass-xl" data-id="${q.id}">    
       <div class="quote-actions">
@@ -384,7 +604,7 @@ function buildHeroCard(q) {
 
 function buildQuoteCard(q) {
   const favClass = state.favorites.has(q.id) ? 'active' : '';
-  const textToShow = (state.language === 'it' && q.textIt) ? q.textIt : q.text;
+  const textToShow = getDisplayQuoteText(q);
   return `
     <article class="quote-card glass" data-id="${q.id}">
       <div class="quote-actions">
@@ -396,6 +616,9 @@ function buildQuoteCard(q) {
                 data-id="${q.id}">↗</button>
       </div>
       <p class="quote-text">${escText(textToShow)}</p>
+      <div class="quote-attribution">
+        <span class="quote-saint">${escText(q.saint)}</span>
+        <span class="quote-era">${escText(q.era)} · ${escText(q.source)}</span>
         <span class="quote-category-badge">${escText(q.category)}</span>
       </div>
     </article>
@@ -414,6 +637,9 @@ function escText(str) {
 
 /* ── Card Event Delegation ──────────────────────────────────── */
 function attachCardListeners(container) {
+  if (container.dataset.listenersBound === '1') return;
+  container.dataset.listenersBound = '1';
+
   container.addEventListener('click', async (e) => {
     // Favorite button
     const favBtn = e.target.closest('.fav-btn');
@@ -437,6 +663,7 @@ function attachCardListeners(container) {
 
 /* ── Favorites ──────────────────────────────────────────────── */
 async function toggleFavorite(quoteId, btn) {
+  const t = translations[getCurrentLocale()];
   const quote = QUOTES.find(q => q.id === quoteId);
   if (!quote) return;
 
@@ -444,12 +671,12 @@ async function toggleFavorite(quoteId, btn) {
     state.favorites.delete(quoteId);
     await removeFavorite(quoteId);
     btn?.classList.remove('active');
-    showToast('Removed from favorites');
+    showToast(t.removedFavorite);
   } else {
     state.favorites.add(quoteId);
     await addFavorite(quote);
     btn?.classList.add('active');
-    showToast('⭐ Added to favorites');
+    showToast(t.addedFavorite);
   }
 
   // Re-render favorites view if active
@@ -458,10 +685,11 @@ async function toggleFavorite(quoteId, btn) {
 
 /* ── Share ──────────────────────────────────────────────────── */
 async function shareQuote(quoteId) {
+  const t = translations[getCurrentLocale()];
   const q = QUOTES.find(q => q.id === quoteId);
   if (!q) return;
 
-  const shareText = `"${q.text}" — ${q.saint} (${q.era})`;
+  const shareText = `"${getDisplayQuoteText(q)}" — ${q.saint} (${q.era})`;
 
   if (navigator.share) {
     try {
@@ -470,9 +698,9 @@ async function shareQuote(quoteId) {
   } else {
     try {
       await navigator.clipboard.writeText(shareText);
-      showToast('📋 Quote copied to clipboard');
+      showToast(t.quoteShareCopied);
     } catch (_) {
-      showToast('Share is not available on this browser');
+      showToast(t.quoteShareUnavailable);
     }
   }
 }
@@ -490,13 +718,14 @@ function setupSearch() {
 function setupFilterChips() {
   const container = $('#filter-chips');
   if (!container) return;
+  const locale = getCurrentLocale();
 
   const categories = ['All', ...new Set(QUOTES.map(q => q.category))].sort((a, b) =>
     a === 'All' ? -1 : b === 'All' ? 1 : a.localeCompare(b)
   );
 
   const getCatLabel = (cat) => {
-    if (cat === 'All') return state.language === 'it' ? 'Tutti' : 'All';
+    if (cat === 'All') return locale === 'it' ? 'Tutti' : 'All';
     return cat;
   };
 
@@ -529,9 +758,8 @@ function setupFilterChips() {
 function getFilteredQuotes() {
   return QUOTES.filter(q => {
     const matchCat  = state.currentFilter === 'All' || q.category === state.currentFilter;
-    const matchText = !state.searchQuery ||
-      q.text.toLowerCase().includes(state.searchQuery) ||
-      q.saint.toLowerCase().includes(state.searchQuery);
+    const haystack = `${q.text} ${q.textIt ?? ''} ${q.saint} ${q.source} ${q.category}`.toLowerCase();
+    const matchText = !state.searchQuery || haystack.includes(state.searchQuery);
     return matchCat && matchText;
   });
 }
@@ -557,10 +785,36 @@ function setupThemeColor() {
   const darkMQ   = window.matchMedia('(prefers-color-scheme: dark)');
   const metaTag  = document.querySelector('meta[name="theme-color"]');
   const applyColor = (isDark) => {
-    if (metaTag) metaTag.content = isDark ? '#1e1b4b' : '#6d28d9';
+    if (metaTag) metaTag.content = isDark ? '#2e1010' : '#991b1b';
   };
   applyColor(darkMQ.matches);
   darkMQ.addEventListener('change', e => applyColor(e.matches));
+}
+
+/* ── Keyboard Shortcuts ────────────────────────────────────── */
+function setupKeyboardShortcuts() {
+  document.addEventListener('keydown', (e) => {
+    if (e.defaultPrevented) return;
+
+    if (e.key === '/' && !isTypingTarget(e.target)) {
+      e.preventDefault();
+      navigateTo('browse');
+      const searchInput = $('#search-input');
+      searchInput?.focus();
+      return;
+    }
+
+    if (e.altKey && TAB_VIEWS[Number(e.key) - 1]) {
+      e.preventDefault();
+      navigateTo(TAB_VIEWS[Number(e.key) - 1]);
+      return;
+    }
+
+    if ((e.key === 'r' || e.key === 'R') && state.currentView === 'today' && !isTypingTarget(e.target)) {
+      e.preventDefault();
+      $('#today-reroll-btn')?.click();
+    }
+  });
 }
 
 /* ── Share Button Setup ─────────────────────────────────────── */
