@@ -1,8 +1,18 @@
 "use client";
 
 import { useRef, MouseEvent } from "react";
-import DailyQuote from "./DailyQuote";
+import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
+
+const DailyQuote = dynamic(() => import("./DailyQuote"), {
+  ssr: false,
+  loading: () => (
+    <div className="md:col-span-2 aspect-video backdrop-blur-2xl bg-white/5 border border-white/10 rounded-3xl p-10 flex flex-col justify-end animate-pulse">
+      <div className="h-8 md:h-12 bg-white/10 rounded-lg w-3/4 mb-6" />
+      <div className="h-4 bg-white/10 rounded-md w-1/4" />
+    </div>
+  ),
+});
 
 const quotes = [
   { text: "Have patience with all things.", saint: "St. Francis de Sales", category: "Virtue" },

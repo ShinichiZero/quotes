@@ -6,16 +6,25 @@ import { motion } from "framer-motion";
 
 export default function DailyQuote() {
   const [quote, setQuote] = useState<Quote | null>(null);
-  const [isMounted, setIsMounted] = useState(false);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    setIsMounted(true);
-    if (typeof window !== "undefined") {
-      setQuote(quotes[getDailyQuoteIndex()]);
+    if (typeof window === "undefined") {
+      return;
     }
+
+    const frame = window.requestAnimationFrame(() => {
+      const index = getDailyQuoteIndex();
+      setQuote(quotes[index] ?? null);
+      setReady(true);
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+    };
   }, []);
 
-  if (!isMounted) {
+  if (!ready) {
     return (
       <div className="md:col-span-2 aspect-video backdrop-blur-2xl bg-white/5 border border-white/10 rounded-3xl p-10 flex flex-col justify-end animate-pulse">
         <div className="h-8 md:h-12 bg-white/10 rounded-lg w-3/4 mb-6 relative overflow-hidden">
@@ -27,18 +36,7 @@ export default function DailyQuote() {
   }
 
   if (!quote) {
-    return (
-      <motion.div 
-        className="md:col-span-2 aspect-video group relative backdrop-blur-2xl bg-white/5 border border-white/10 rounded-3xl p-10 flex flex-col justify-end overflow-hidden"
-      >
-        <p className="text-3xl md:text-5xl font-[family-name:var(--font-cormorant)] tracking-tighter mb-6 leading-tight text-white/90">
-          "God is Love."
-        </p>
-        <div className="flex items-center gap-4 text-white/50 tracking-wider uppercase">
-          — St. John
-        </div>
-      </motion.div>
-    );
+    return <div className="text-white">"God is Love." - St. John</div>;
   }
 
   return (

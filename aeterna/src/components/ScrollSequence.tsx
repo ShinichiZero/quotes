@@ -1,12 +1,13 @@
 "use client";
 
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion, useMotionValueEvent, useScroll, useTransform } from "framer-motion";
 import { useEffect, useState } from "react";
 
 export default function ScrollSequence() {
   const { scrollYProgress } = useScroll();
   const [imagesLoaded, setImagesLoaded] = useState(false);
   const [frames, setFrames] = useState<string[]>([]);
+  const [currentFrame, setCurrentFrame] = useState<string>("");
 
   // Simulation of loading image sequences
   // Replace these URLs or path names with your actual /images sequence images
@@ -17,6 +18,7 @@ export default function ScrollSequence() {
       (_, i) => `/images/frame_${(i + 1).toString().padStart(3, "0")}.png`
     );
     setFrames(framePaths);
+    setCurrentFrame(framePaths[0] ?? "");
     setImagesLoaded(true);
   }, []);
 
@@ -26,6 +28,18 @@ export default function ScrollSequence() {
     [0, 1],
     [0, frames.length > 0 ? frames.length - 1 : 0]
   );
+
+  useMotionValueEvent(activeFrameIndex, "change", (latest) => {
+    if (!frames.length) {
+      return;
+    }
+
+    const safeIndex = Math.min(
+      frames.length - 1,
+      Math.max(0, Math.floor(Number(latest)))
+    );
+    setCurrentFrame(frames[safeIndex]);
+  });
 
   return (
     <section className="relative h-[200vh] w-full flex justify-center items-start pt-[30vh]">
@@ -39,11 +53,7 @@ export default function ScrollSequence() {
       >
         {imagesLoaded && frames.length > 0 && (
           <motion.img
-            src={useTransform(
-              activeFrameIndex, 
-              (index) => frames[Math.floor(index)]
-            )}
-            priority="true"
+            src={currentFrame || frames[0]}
             className="w-full h-full object-contain filter brightness-150 contrast-125"
             alt="Sequence Frame"
           />

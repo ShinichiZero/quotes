@@ -32,14 +32,29 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html: `
               if ("serviceWorker" in navigator) {
-                navigator.serviceWorker.getRegistrations().then(function(registrations) {
-                  for(let registration of registrations) {
-                    registration.unregister();
-                    console.log("Service Worker unregistered via kill-switch.");
-                  }
-                }).catch(function(err) {
-                  console.log("Service Worker unregistration failed: ", err);
-                });
+                navigator.serviceWorker
+                  .getRegistrations()
+                  .then(function(registrations) {
+                    return Promise.all(
+                      registrations.map(function(registration) {
+                        return registration.unregister();
+                      })
+                    );
+                  })
+                  .catch(function() {});
+              }
+
+              if ("caches" in window) {
+                caches
+                  .keys()
+                  .then(function(keys) {
+                    return Promise.all(
+                      keys.map(function(key) {
+                        return caches.delete(key);
+                      })
+                    );
+                  })
+                  .catch(function() {});
               }
             `,
           }}
