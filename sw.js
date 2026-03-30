@@ -10,7 +10,7 @@
  *  - Ignores opaque (cross-origin no-cors) responses.
  */
 
-const CACHE_VERSION  = 'v2';
+const CACHE_VERSION  = 'v3';
 const STATIC_CACHE   = `saints-static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE  = `saints-dynamic-${CACHE_VERSION}`;
 const BASE_PATH      = new URL(self.registration.scope).pathname.replace(/\/$/, '');
