@@ -22,21 +22,27 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v5
         with:
-          node-version: "22"
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: aeterna/package-lock.json
 
       - name: Pre-build Clean
         run: |
-          rm -rf out
-          rm -rf .next
-        working-directory: ./aeterna
+          rm -rf aeterna/out
+          rm -rf aeterna/.next
 
       - name: Install Dependencies
-        run: npm ci
-        working-directory: ./aeterna
+        run: |
+          set -eux
+          test -f aeterna/package.json
+          if [ -f aeterna/package-lock.json ]; then
+            npm ci --prefix aeterna --no-audit --no-fund || npm install --prefix aeterna --no-audit --no-fund
+          else
+            npm install --prefix aeterna --no-audit --no-fund
+          fi
 
       - name: Build Static Export
-        run: npm run build
-        working-directory: ./aeterna
+        run: npm run build --prefix aeterna
 
       - name: Deploy to gh-pages
         uses: JamesIves/github-pages-deploy-action@v4
