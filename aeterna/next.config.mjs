@@ -6,8 +6,13 @@ const cacheHeaders = [
   },
 ];
 
+const repoName = process.env.GITHUB_REPOSITORY?.split("/")[1] || "quotes";
+const isGithubPagesBuild = process.env.GITHUB_ACTIONS === "true";
+
 const nextConfig = {
   output: "export",
+  basePath: isGithubPagesBuild ? `/${repoName}` : "",
+  assetPrefix: isGithubPagesBuild ? `/${repoName}/` : undefined,
   images: {
     unoptimized: true,
   },
