@@ -51,6 +51,7 @@ const state = {
   favorites:      new Set(),
   deferredPrompt: null,
   verifiedQuotes: false,
+  language:       'en',
 };
 
 /* ── Bootstrap ─────────────────────────────────────────────── */
@@ -123,6 +124,9 @@ async function initDB() {
   const favs = await getAllFavorites();
   favs.forEach(f => state.favorites.add(f.id));
 
+  // Load language preference
+  state.language = await getSetting('language', 'en');
+
   // Verify quote integrity
   await verifyQuoteIntegrity();
 }
@@ -181,11 +185,72 @@ function navigateTo(view) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+/* ── UI Translations ───────────────────────────────────────── */
+const translations = {
+  en: {
+    today: "Today's Quote",
+    browse: "Browse Quotes",
+    favorites: "Favorites",
+    settings: "Settings",
+    search: "Search saints, quotes…",
+    searchLbl: "Search quotes",
+    installBtn: "Install",
+    installTxt: "Install <strong>Saints &amp; Wisdom</strong> for an offline experience!",
+    emptyFav: "No favorites yet.<br>Tap the star on any quote to save it.",
+    emptySearch: "No quotes match your search."
+  },
+  it: {
+    today: "Frase del Giorno",
+    browse: "Esplora",
+    favorites: "Preferiti",
+    settings: "Impostazioni",
+    search: "Cerca santi, frasi…",
+    searchLbl: "Cerca frasi",
+    installBtn: "Installa",
+    installTxt: "Installa <strong>Saints &amp; Wisdom</strong> per usarlo offline!",
+    emptyFav: "Nessun preferito.<br>Tocca la stella su una frase per salvarla.",
+    emptySearch: "Nessuna frase corrisponde alla ricerca."
+  }
+};
+
+function updateUITexts() {
+  const t = translations[state.language];
+  const $ = (s) => document.querySelector(s);
+  
+  if ($('#today-heading')) $('#today-heading').innerHTML = `<span aria-hidden="true">☀️</span> ${t.today}`;
+  if ($('#browse-heading')) $('#browse-heading').innerHTML = `<span aria-hidden="true">📖</span> ${t.browse}`;
+  if ($('#favorites-heading')) $('#favorites-heading').innerHTML = `<span aria-hidden="true">⭐</span> ${t.favorites}`;
+  if ($('#settings-heading')) $('#settings-heading').innerHTML = `<span aria-hidden="true">⚙️</span> ${t.settings}`;
+  if ($('#search-input')) {
+    $('#search-input').placeholder = t.search;
+    const label = document.querySelector('label[for="search-input"]');
+    if (label) label.textContent = t.searchLbl;
+  }
+  
+  if ($('#install-txt')) $('#install-txt').innerHTML = t.installTxt;
+  if ($('#install-btn')) $('#install-btn').textContent = t.installBtn;
+
+  if ($('#label-app-settings')) $('#label-app-settings').textContent = t.settings === 'Impostazioni' ? 'App' : 'App';
+  if ($('#label-language')) $('#label-language').textContent = t.settings === 'Impostazioni' ? 'Lingua' : 'Language';
+  if ($('#label-daily-notif')) $('#label-daily-notif').textContent = t.settings === 'Impostazioni' ? 'Notifiche Giornaliere' : 'Daily Notifications';
+  
+  // Also update bottom nav
+  const navItems = document.querySelectorAll('.nav-label');
+  if (navItems.length >= 4) {
+    navItems[0].textContent = t.today;
+    navItems[1].textContent = t.browse;
+    navItems[2].textContent = t.favorites;
+    navItems[3].textContent = t.settings;
+  }
+}
+
 /* ── View Rendering ────────────────────────────────────────── */
 function renderView(view) {
   $$('.view').forEach(v => v.classList.remove('active'));
   const el = $(`#view-${view}`);
   if (el) el.classList.add('active');
+
+  updateUITexts();
 
   switch (view) {
     case 'today':     renderToday();     break;
@@ -227,7 +292,7 @@ function renderBrowse() {
   container.innerHTML = safeHTML(
     filtered.length
       ? `<div class="quote-grid">${filtered.map(buildQuoteCard).join('')}</div>`
-      : `<div class="empty-state"><span class="empty-icon">🔍</span><p>No quotes match your search.</p></div>`
+      : `<div class="empty-state"><span class="empty-icon">🔍</span><p>${translations[state.language].emptySearch}</p></div>`
   );
 
   attachCardListeners(container);
@@ -244,7 +309,7 @@ async function renderFavorites() {
   container.innerHTML = safeHTML(
     favQuotes.length
       ? `<div class="quote-grid">${favQuotes.map(buildQuoteCard).join('')}</div>`
-      : `<div class="empty-state"><span class="empty-icon">⭐</span><p>No favorites yet.<br>Tap the star on any quote to save it.</p></div>`
+      : `<div class="empty-state"><span class="empty-icon">⭐</span><p>${translations[state.language].emptyFav}</p></div>`
   );
 
   attachCardListeners(container);
@@ -254,7 +319,20 @@ async function renderFavorites() {
 async function renderSettings() {
   // Settings are rendered statically in HTML; just wire up toggles
   const notificationsOn = await getSetting('notifications', false);
-  const darkModeOn      = await getSetting('darkMode',      'auto');
+  const language        = state.language;
+
+  const langSelect = $('#setting-language');
+  if (langSelect) {
+    langSelect.value = language;
+    langSelect.addEventListener('change', async (e) => {
+      state.language = e.target.value;
+      await setSetting('language', state.language);
+      
+      // Re-render UI to update text immediately
+      setupFilterChips();
+      renderView(state.currentView);
+    });
+  }
 
   const notifToggle = $('#setting-notifications');
   if (notifToggle) {
@@ -281,8 +359,9 @@ async function renderSettings() {
 /* ── Quote Card Builders ────────────────────────────────────── */
 function buildHeroCard(q) {
   const favClass = state.favorites.has(q.id) ? 'active' : '';
+  const textToShow = (state.language === 'it' && q.textIt) ? q.textIt : q.text;
   return `
-    <article class="quote-card quote-hero glass glass-xl" data-id="${q.id}">
+    <article class="quote-card quote-hero glass glass-xl" data-id="${q.id}">    
       <div class="quote-actions">
         <button class="quote-action-btn fav-btn ${favClass}"
                 aria-label="Toggle favorite"
@@ -291,11 +370,11 @@ function buildHeroCard(q) {
                 aria-label="Share quote"
                 data-id="${q.id}">↗</button>
       </div>
-      <p class="quote-text">${escText(q.text)}</p>
+      <p class="quote-text">${escText(textToShow)}</p>
       <div class="quote-attribution">
         <span class="quote-saint">${escText(q.saint)}</span>
-        <span class="quote-era">${escText(q.era)} · ${escText(q.source)}</span>
-        <span class="quote-category-badge">${escText(q.category)}</span>
+        <span class="quote-era">${escText(q.era)} · ${escText(q.source)}</span> 
+        <span class="quote-category-badge">${escText(q.category)}</span>        
         ${state.verifiedQuotes ? '<span class="verified-badge">✓ Verified</span>' : ''}
       </div>
     </article>
@@ -304,6 +383,7 @@ function buildHeroCard(q) {
 
 function buildQuoteCard(q) {
   const favClass = state.favorites.has(q.id) ? 'active' : '';
+  const textToShow = (state.language === 'it' && q.textIt) ? q.textIt : q.text;
   return `
     <article class="quote-card glass" data-id="${q.id}">
       <div class="quote-actions">
@@ -314,10 +394,7 @@ function buildQuoteCard(q) {
                 aria-label="Share quote"
                 data-id="${q.id}">↗</button>
       </div>
-      <p class="quote-text">${escText(q.text)}</p>
-      <div class="quote-attribution">
-        <span class="quote-saint">${escText(q.saint)}</span>
-        <span class="quote-era">${escText(q.era)}</span>
+      <p class="quote-text">${escText(textToShow)}</p>
         <span class="quote-category-badge">${escText(q.category)}</span>
       </div>
     </article>
@@ -417,18 +494,27 @@ function setupFilterChips() {
     a === 'All' ? -1 : b === 'All' ? 1 : a.localeCompare(b)
   );
 
+  const getCatLabel = (cat) => {
+    if (cat === 'All') return state.language === 'it' ? 'Tutti' : 'All';
+    return cat;
+  };
+
   container.innerHTML = safeHTML(
     categories.map(cat => `
-      <button class="filter-chip ${cat === 'All' ? 'active' : ''}"
+      <button class="filter-chip ${cat === state.currentFilter || (cat === 'All' && state.currentFilter === 'All') ? 'active' : ''}"
               data-cat="${escText(cat)}"
-              aria-pressed="${cat === 'All'}">${escText(cat)}</button>
+              aria-pressed="${cat === state.currentFilter}">${escText(getCatLabel(cat))}</button>
     `).join('')
   );
 
-  container.addEventListener('click', (e) => {
+  // Clear previous listeners to avoid duplicates if re-rendered
+  const newContainer = container.cloneNode(true);
+  container.parentNode.replaceChild(newContainer, container);
+  
+  newContainer.addEventListener('click', (e) => {
     const chip = e.target.closest('.filter-chip');
     if (!chip) return;
-    $$('.filter-chip', container).forEach(c => {
+    $$('.filter-chip', newContainer).forEach(c => {
       c.classList.remove('active');
       c.setAttribute('aria-pressed', 'false');
     });

@@ -112,7 +112,7 @@
   <!-- ── Install Prompt Banner ─────────────────────────────── -->
   <div id="install-banner" class="glass glass-sm" role="region"
        aria-label="Install app">
-    <p>Install <strong>Saints &amp; Wisdom</strong> for an offline experience!</p>
+    <p id="install-txt">Install <strong>Saints &amp; Wisdom</strong> for an offline experience!</p>
     <button class="btn-primary" id="install-btn">Install</button>
     <button class="btn-ghost"   id="install-dismiss" aria-label="Dismiss">✕</button>
   </div>
@@ -184,11 +184,18 @@
       </h2>
 
       <div class="settings-group">
-        <p class="settings-group-label">App</p>
+        <p class="settings-group-label" id="label-app-settings">App</p>
 
         <div class="glass glass-sm">
           <div class="settings-row">
-            <span class="settings-label">Daily Notifications</span>
+            <span class="settings-label" id="label-language">Language / Lingua</span>
+            <select id="setting-language" class="glass-select" aria-label="Select language">
+              <option value="en">English</option>
+              <option value="it">Italiano</option>
+            </select>
+          </div>
+          <div class="settings-row">
+            <span class="settings-label" id="label-daily-notif">Daily Notifications</span>
             <div class="toggle" id="setting-notifications"
                  role="switch" aria-checked="false"
                  tabindex="0" aria-label="Toggle daily notifications"></div>

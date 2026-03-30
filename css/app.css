@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Lora:ital,wght@0,400;0,500;1,400&family=Plus+Jakarta+Sans:wght@300;400;600&display=swap');
+
 /* ============================================================
    Saints & Wisdom — App Styles
    Glassmorphism · Dark/Light · iOS/Android/Windows
@@ -5,25 +7,25 @@
 
 /* ── CSS Custom Properties ────────────────────────────────── */
 :root {
-  /* Brand colours */
-  --color-primary:        #6d28d9;   /* violet-700 */
-  --color-primary-light:  #8b5cf6;   /* violet-500 */
-  --color-primary-dark:   #4c1d95;   /* violet-900 */
-  --color-accent:         #f59e0b;   /* amber-500  */
+  /* Brand colours - religious crimson and gold approach */
+  --color-primary:        #991b1b;   /* crimson-800 */
+  --color-primary-light:  #b91c1c;   /* crimson-700 */
+  --color-primary-dark:   #7f1d1d;   /* crimson-900 */
+  --color-accent:         #fbbf24;   /* amber-400 */
 
   /* Glassmorphism surface */
-  --glass-bg:             rgba(255, 255, 255, 0.12);
-  --glass-border:         rgba(255, 255, 255, 0.20);
-  --glass-shadow:         0 8px 32px rgba(31, 38, 135, 0.37);
-  --glass-blur:           blur(12px);
+  --glass-bg:             rgba(20, 10, 10, 0.4);
+  --glass-border:         rgba(255, 215, 0, 0.15);
+  --glass-shadow:         0 8px 32px rgba(0, 0, 0, 0.5);
+  --glass-blur:           blur(16px);
 
   /* Text */
-  --text-primary:         #f8fafc;
-  --text-secondary:       rgba(248, 250, 252, 0.75);
-  --text-muted:           rgba(248, 250, 252, 0.50);
+  --text-primary:         #fef3c7;   /* warm gold white */
+  --text-secondary:       rgba(254, 243, 199, 0.85);
+  --text-muted:           rgba(254, 243, 199, 0.6);
 
-  /* Background gradient (dark default) */
-  --bg-gradient:          linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+  /* Background gradient (dark default - deep church colors) */
+  --bg-gradient:          linear-gradient(135deg, #18181b 0%, #2e1010 40%, #171010 100%);
 
   /* Navigation */
   --nav-height:           64px;   /* bottom-tab height */
@@ -47,24 +49,24 @@
   --transition-base:  250ms ease;
   --transition-slow:  400ms ease;
 
-  /* Typography — system stack preferring SF Pro on iOS */
-  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI Variable Display",
-               "Segoe UI", system-ui, Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-serif: "Georgia", "Times New Roman", serif;
+  /* Typography */
+  --font-sans: "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-serif: "Lora", "Georgia", serif;
+  --font-display: "Cinzel", "Times New Roman", serif;
 }
 
 /* ── Light mode overrides ─────────────────────────────────── */
 @media (prefers-color-scheme: light) {
   :root {
-    --glass-bg:      rgba(255, 255, 255, 0.60);
-    --glass-border:  rgba(255, 255, 255, 0.80);
-    --glass-shadow:  0 8px 32px rgba(109, 40, 217, 0.15);
+    --glass-bg:      rgba(255, 255, 255, 0.7);
+    --glass-border:  rgba(153, 27, 27, 0.2);
+    --glass-shadow:  0 8px 32px rgba(153, 27, 27, 0.1);
 
-    --text-primary:   #1e1b4b;
-    --text-secondary: rgba(30, 27, 75, 0.80);
-    --text-muted:     rgba(30, 27, 75, 0.55);
+    --text-primary:   #450a0a;   /* very dark crimson */
+    --text-secondary: rgba(69, 10, 10, 0.85);
+    --text-muted:     rgba(69, 10, 10, 0.6);
 
-    --bg-gradient: linear-gradient(135deg, #ede9fe 0%, #c4b5fd 50%, #ddd6fe 100%);
+    --bg-gradient: linear-gradient(135deg, #fffbeb 0%, #fef3c7 50%, #fde68a 100%);
   }
 }
 
@@ -159,9 +161,10 @@ body {
 }
 
 .header-title {
-  font-size: 1.125rem;
+  font-family: var(--font-display);
+  font-size: 1.25rem;
   font-weight: 700;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.05em;
   color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
@@ -231,9 +234,11 @@ body {
 }
 
 .quote-saint {
+  font-family: var(--font-display);
   font-weight: 700;
-  font-size: 0.9375rem;
-  color: var(--color-primary-light);
+  font-size: 1rem;
+  color: var(--color-accent); /* use gold instead of primary light */
+  letter-spacing: 0.03em;
 }
 
 .quote-era {
@@ -801,6 +806,30 @@ body {
   cursor: pointer;
 }
 
+.glass-select {
+  background: var(--glass-bg);
+  color: var(--text-primary);
+  border: 1px solid var(--glass-border);
+  border-radius: 0.5rem;
+  padding: 0.4rem 0.6rem;
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  outline: none;
+  cursor: pointer;
+}
+
+.glass-select option {
+  background: #333; /* Dark fallback for options list */
+  color: #fff;
+}
+
+@media (prefers-color-scheme: light) {
+  .glass-select option {
+    background: #fff;
+    color: #000;
+  }
+}
+
 .settings-label {
   font-size: 0.9375rem;
   color: var(--text-primary);
@@ -851,7 +880,8 @@ body {
   display: none;
 }
 
-/* ── Section Headings ─────────────────────────────────────── */
+/* ── Sfamily: var(--font-display);
+  font-size: 1.adings ─────────────────────────────────────── */
 .section-heading {
   font-size: 1.25rem;
   font-weight: 700;
