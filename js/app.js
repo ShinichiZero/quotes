@@ -1,4 +1,4 @@
-/**
+﻿/**
  * app.js — Saints & Wisdom main application
  *
  * Responsibilities:
@@ -110,11 +110,15 @@ const state = {
 
 /* ── Bootstrap ─────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', async () => {
-  await Promise.all([
-    registerServiceWorker(),
-    initDB(),
-    setupInstallPrompt(),
-  ]);
+  try {
+    await Promise.allSettled([
+      registerServiceWorker(),
+      initDB()
+    ]);
+  } catch(e) {
+    console.warn("Init partially failed, continuing:", e);
+  }
+  setupInstallPrompt();
 
   setupNavigation();
   setupSearch();
@@ -872,3 +876,4 @@ function showToast(message, duration = 3000) {
 
   setTimeout(() => toast.remove(), duration);
 }
+
