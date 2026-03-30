@@ -77,8 +77,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function registerServiceWorker() {
   if (!('serviceWorker' in navigator)) return;
   try {
-    const swURL = safeScriptURL('/sw.js');
-    const reg = await navigator.serviceWorker.register(swURL, { scope: '/' });
+    const swURL = safeScriptURL(new URL('../sw.js', import.meta.url).href);
+    const swScope = new URL('../', import.meta.url).pathname;
+    const reg = await navigator.serviceWorker.register(swURL, { scope: swScope });
 
     // Periodic Background Sync (Chrome / Android)
     if ('periodicSync' in reg) {

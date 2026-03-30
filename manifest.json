@@ -2,8 +2,8 @@
   "name": "Saints & Wisdom",
   "short_name": "Saints",
   "description": "Daily quotes and wisdom from the Saints of the Church.",
-  "start_url": "/",
-  "scope": "/",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
   "display_override": ["window-controls-overlay", "standalone", "minimal-ui", "browser"],
   "orientation": "any",
@@ -67,21 +67,21 @@
       "name": "Today's Quote",
       "short_name": "Today",
       "description": "View today's Saint quote",
-      "url": "/?view=today",
+      "url": "./?view=today",
       "icons": [{ "src": "icons/icon-96.png", "sizes": "96x96" }]
     },
     {
       "name": "Favorites",
       "short_name": "Favorites",
       "description": "View your saved favorite quotes",
-      "url": "/?view=favorites",
+      "url": "./?view=favorites",
       "icons": [{ "src": "icons/icon-96.png", "sizes": "96x96" }]
     }
   ],
   "screenshots": [],
   "prefer_related_applications": false,
   "share_target": {
-    "action": "/share",
+    "action": "./share",
     "method": "GET",
     "enctype": "application/x-www-form-urlencoded",
     "params": {

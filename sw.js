@@ -13,19 +13,24 @@
 const CACHE_VERSION  = 'v1';
 const STATIC_CACHE   = `saints-static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE  = `saints-dynamic-${CACHE_VERSION}`;
+const BASE_PATH      = new URL(self.registration.scope).pathname.replace(/\/$/, '');
+
+function withBase(path) {
+  return `${BASE_PATH}${path}`;
+}
 
 const STATIC_ASSETS = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/css/app.css',
-  '/js/app.js',
-  '/js/quotes.js',
-  '/js/crypto.js',
-  '/js/db.js',
-  '/js/platform.js',
-  '/icons/icon-192.png',
-  '/icons/icon-512.png',
+  `${BASE_PATH}/`,
+  withBase('/index.html'),
+  withBase('/manifest.json'),
+  withBase('/css/app.css'),
+  withBase('/js/app.js'),
+  withBase('/js/quotes.js'),
+  withBase('/js/crypto.js'),
+  withBase('/js/db.js'),
+  withBase('/js/platform.js'),
+  withBase('/icons/icon-192.png'),
+  withBase('/icons/icon-512.png'),
 ];
 
 /* ── Install: pre-cache static assets ─────────────────────── */
@@ -114,9 +119,10 @@ self.addEventListener('periodicsync', (event) => {
 async function refreshQuotesCache() {
   const cache = await caches.open(STATIC_CACHE);
   try {
-    const response = await fetch('/js/quotes.js');
+    const quotesPath = withBase('/js/quotes.js');
+    const response = await fetch(quotesPath);
     if (isCacheable(response)) {
-      await cache.put('/js/quotes.js', response);
+      await cache.put(quotesPath, response);
     }
   } catch (err) {
     console.warn('[SW] Periodic sync fetch failed:', err);
