@@ -1,6 +1,8 @@
 node_modules/
 package-lock.json
 package.json
+!aeterna/package-lock.json
+!aeterna/package.json
 *.log
 .DS_Store
 Thumbs.db
