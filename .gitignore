@@ -1,0 +1,11 @@
+node_modules/
+package-lock.json
+package.json
+*.log
+.DS_Store
+Thumbs.db
+dist/
+.env
+icons/node_modules/
+icons/package-lock.json
+icons/package.json
