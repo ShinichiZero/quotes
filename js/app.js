@@ -109,29 +109,48 @@ const state = {
 };
 
 /* ── Bootstrap ─────────────────────────────────────────────── */
-document.addEventListener('DOMContentLoaded', async () => {
-  try {
-    await Promise.allSettled([
-      registerServiceWorker(),
-      initDB()
-    ]);
-  } catch(e) {
-    console.warn("Init partially failed, continuing:", e);
-  }
-  setupInstallPrompt();
-
+async function bootstrap() {
+  // Render UI synchronously first to prevent forever-loading skeletons
   setupNavigation();
   setupSearch();
   setupFilterChips();
   setupWindowControlsOverlay();
-  setupThemeColor();
   setupKeyboardShortcuts();
-  applyAccessibilityPreferences();
   setupShareButtons();
+  
+  // Show default state immediately
+  renderView('today');
+
+  // Do slow background operations with failsafe timeouts
+  try {
+    const withTimeout = (prom, ms) => Promise.race([
+      prom, 
+      new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))
+    ]);
+
+    await Promise.allSettled([
+      withTimeout(registerServiceWorker(), 3000),
+      withTimeout(initDB(), 3000)
+    ]);
+  } catch(e) {
+    console.warn("Init partially failed, continuing:", e);
+  }
+
+  // Complete DB-reliant setup
+  setupInstallPrompt();
+  setupThemeColor();
+  applyAccessibilityPreferences();
   refreshOnOpen();
 
-  renderView('today');
-});
+  // Re-render UI in case DB loaded user preferences (language, streak, etc)
+  renderView(state.currentView);
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', bootstrap);
+} else {
+  bootstrap();
+}
 
 /* ── Service Worker ────────────────────────────────────────── */
 async function registerServiceWorker() {
