@@ -1,28 +1,501 @@
+export type QuoteCategory =
+  | "Prayer"
+  | "Hope"
+  | "Wisdom"
+  | "Courage"
+  | "Love"
+  | "Discipline"
+  | "Mercy"
+  | "Joy";
+
+export type QuoteEra = "Early Church" | "Middle Ages" | "Modern";
+
 export interface Quote {
+  id: number;
   text: string;
   saint: string;
   feastDay?: string;
-  category: "Peace" | "Courage" | "Virtue" | "Wisdom" | "Love";
+  feastMonth?: number;
+  category: QuoteCategory;
+  era: QuoteEra;
+  tags: string[];
+  source: string;
 }
 
-// A representative array of Saint quotes for the Wisdom Engine.
-// In a full production build, this would contain all 365 quotes.
-export const quotes: Quote[] = [
-  { text: "Pray, hope, and don't worry.", saint: "St. Padre Pio", feastDay: "Sept 23", category: "Peace" },
-  { text: "Have patience with all things, but chiefly have patience with yourself.", saint: "St. Francis de Sales", feastDay: "Jan 24", category: "Virtue" },
-  { text: "To love God as He ought to be loved, we must be detached from all temporal love.", saint: "St. Teresa of Avila", feastDay: "Oct 15", category: "Love" },
-  { text: "Our hearts are restless until they rest in You.", saint: "St. Augustine", feastDay: "Aug 28", category: "Peace" },
-  { text: "Act, and God will act.", saint: "St. Joan of Arc", feastDay: "May 30", category: "Courage" },
-  { text: "Nothing great is ever achieved without much enduring.", saint: "St. Catherine of Siena", feastDay: "Apr 29", category: "Courage" },
-  { text: "Love to be real, it must cost—it must hurt—it must empty us of self.", saint: "Mother Teresa", feastDay: "Sep 5", category: "Love" },
-  { text: "Faith is to believe what you do not see; the reward of this faith is to see what you believe.", saint: "St. Augustine", feastDay: "Aug 28", category: "Wisdom" },
-  { text: "Be who God meant you to be and you will set the world on fire.", saint: "St. Catherine of Siena", feastDay: "Apr 29", category: "Virtue" },
-  { text: "The world offers you comfort. But you were not made for comfort. You were made for greatness.", saint: "Pope Benedict XVI", category: "Courage" },
+export const monthOptions = [
+  { value: 1, label: "January" },
+  { value: 2, label: "February" },
+  { value: 3, label: "March" },
+  { value: 4, label: "April" },
+  { value: 5, label: "May" },
+  { value: 6, label: "June" },
+  { value: 7, label: "July" },
+  { value: 8, label: "August" },
+  { value: 9, label: "September" },
+  { value: 10, label: "October" },
+  { value: 11, label: "November" },
+  { value: 12, label: "December" },
 ];
 
-export function getDailyQuoteIndex(): number {
-  const now = new Date();
-  // Simple deterministic index based on the day of the year
-  const dayOfYear = Math.floor((now.getTime() - new Date(now.getFullYear(), 0, 0).getTime()) / 1000 / 60 / 60 / 24);
+export const quotes: Quote[] = [
+  {
+    id: 1,
+    text: "Pray, hope, and do not worry.",
+    saint: "St. Padre Pio",
+    feastDay: "Sept 23",
+    feastMonth: 9,
+    category: "Hope",
+    era: "Modern",
+    tags: ["trust", "anxiety", "daily"],
+    source: "Letters",
+  },
+  {
+    id: 2,
+    text: "Our hearts are restless until they rest in You.",
+    saint: "St. Augustine",
+    feastDay: "Aug 28",
+    feastMonth: 8,
+    category: "Wisdom",
+    era: "Early Church",
+    tags: ["rest", "longing", "truth"],
+    source: "Confessions",
+  },
+  {
+    id: 3,
+    text: "Late have I loved You, O Beauty ever ancient, ever new.",
+    saint: "St. Augustine",
+    feastDay: "Aug 28",
+    feastMonth: 8,
+    category: "Love",
+    era: "Early Church",
+    tags: ["conversion", "beauty", "desire"],
+    source: "Confessions",
+  },
+  {
+    id: 4,
+    text: "Be who God meant you to be and you will set the world on fire.",
+    saint: "St. Catherine of Siena",
+    feastDay: "Apr 29",
+    feastMonth: 4,
+    category: "Courage",
+    era: "Middle Ages",
+    tags: ["mission", "identity", "vocation"],
+    source: "Letters",
+  },
+  {
+    id: 5,
+    text: "Nothing great is ever achieved without much enduring.",
+    saint: "St. Catherine of Siena",
+    feastDay: "Apr 29",
+    feastMonth: 4,
+    category: "Discipline",
+    era: "Middle Ages",
+    tags: ["perseverance", "effort", "growth"],
+    source: "Letters",
+  },
+  {
+    id: 6,
+    text: "Have patience with all things, but chiefly with yourself.",
+    saint: "St. Francis de Sales",
+    feastDay: "Jan 24",
+    feastMonth: 1,
+    category: "Mercy",
+    era: "Modern",
+    tags: ["patience", "self", "healing"],
+    source: "Introduction to the Devout Life",
+  },
+  {
+    id: 7,
+    text: "Do not lose courage in considering your own imperfections.",
+    saint: "St. Francis de Sales",
+    feastDay: "Jan 24",
+    feastMonth: 1,
+    category: "Hope",
+    era: "Modern",
+    tags: ["imperfection", "courage", "mercy"],
+    source: "Letters",
+  },
+  {
+    id: 8,
+    text: "To love God as He ought to be loved, we must detach from lesser loves.",
+    saint: "St. Teresa of Avila",
+    feastDay: "Oct 15",
+    feastMonth: 10,
+    category: "Love",
+    era: "Modern",
+    tags: ["detachment", "charity", "freedom"],
+    source: "The Way of Perfection",
+  },
+  {
+    id: 9,
+    text: "Let nothing disturb you; God alone suffices.",
+    saint: "St. Teresa of Avila",
+    feastDay: "Oct 15",
+    feastMonth: 10,
+    category: "Hope",
+    era: "Modern",
+    tags: ["peace", "trust", "stillness"],
+    source: "Prayer",
+  },
+  {
+    id: 10,
+    text: "Act, and God will act.",
+    saint: "St. Joan of Arc",
+    feastDay: "May 30",
+    feastMonth: 5,
+    category: "Courage",
+    era: "Middle Ages",
+    tags: ["action", "boldness", "faith"],
+    source: "Trials",
+  },
+  {
+    id: 11,
+    text: "I am not afraid. I was born to do this.",
+    saint: "St. Joan of Arc",
+    feastDay: "May 30",
+    feastMonth: 5,
+    category: "Courage",
+    era: "Middle Ages",
+    tags: ["purpose", "bravery", "calling"],
+    source: "Tradition",
+  },
+  {
+    id: 12,
+    text: "Faith is to believe what you do not see.",
+    saint: "St. Augustine",
+    feastDay: "Aug 28",
+    feastMonth: 8,
+    category: "Wisdom",
+    era: "Early Church",
+    tags: ["faith", "vision", "truth"],
+    source: "Sermons",
+  },
+  {
+    id: 13,
+    text: "Where there is no love, put love, and you will draw love out.",
+    saint: "St. John of the Cross",
+    feastDay: "Dec 14",
+    feastMonth: 12,
+    category: "Love",
+    era: "Modern",
+    tags: ["charity", "relationships", "healing"],
+    source: "Letters",
+  },
+  {
+    id: 14,
+    text: "In the evening of life, we will be judged on love.",
+    saint: "St. John of the Cross",
+    feastDay: "Dec 14",
+    feastMonth: 12,
+    category: "Love",
+    era: "Modern",
+    tags: ["judgment", "charity", "eternity"],
+    source: "Sayings",
+  },
+  {
+    id: 15,
+    text: "Do small things with great love.",
+    saint: "St. Teresa of Calcutta",
+    feastDay: "Sep 5",
+    feastMonth: 9,
+    category: "Mercy",
+    era: "Modern",
+    tags: ["service", "daily", "charity"],
+    source: "Meditations",
+  },
+  {
+    id: 16,
+    text: "Peace begins with a smile.",
+    saint: "St. Teresa of Calcutta",
+    feastDay: "Sep 5",
+    feastMonth: 9,
+    category: "Joy",
+    era: "Modern",
+    tags: ["peace", "kindness", "daily"],
+    source: "Talks",
+  },
+  {
+    id: 17,
+    text: "The Eucharist is the school of active love.",
+    saint: "St. Teresa Benedicta of the Cross",
+    feastDay: "Aug 9",
+    feastMonth: 8,
+    category: "Prayer",
+    era: "Modern",
+    tags: ["eucharist", "charity", "contemplation"],
+    source: "Essays",
+  },
+  {
+    id: 18,
+    text: "Acquire peace and thousands around you will be saved.",
+    saint: "St. Seraphim of Sarov",
+    feastDay: "Jan 2",
+    feastMonth: 1,
+    category: "Hope",
+    era: "Modern",
+    tags: ["peace", "witness", "mission"],
+    source: "Conversations",
+  },
+  {
+    id: 19,
+    text: "The one who has hope lives differently.",
+    saint: "Pope Benedict XVI",
+    category: "Hope",
+    era: "Modern",
+    tags: ["hope", "culture", "witness"],
+    source: "Spe Salvi",
+  },
+  {
+    id: 20,
+    text: "The world offers comfort, but you were made for greatness.",
+    saint: "Pope Benedict XVI",
+    category: "Courage",
+    era: "Modern",
+    tags: ["greatness", "discipleship", "mission"],
+    source: "Homily",
+  },
+  {
+    id: 21,
+    text: "Do not be afraid to become the saints of the new millennium.",
+    saint: "St. John Paul II",
+    feastDay: "Oct 22",
+    feastMonth: 10,
+    category: "Courage",
+    era: "Modern",
+    tags: ["holiness", "future", "youth"],
+    source: "Novo Millennio Ineunte",
+  },
+  {
+    id: 22,
+    text: "Life with Christ is a wonderful adventure.",
+    saint: "St. John Paul II",
+    feastDay: "Oct 22",
+    feastMonth: 10,
+    category: "Joy",
+    era: "Modern",
+    tags: ["adventure", "discipleship", "joy"],
+    source: "Address",
+  },
+  {
+    id: 23,
+    text: "What does love look like? It has hands to help others.",
+    saint: "St. Augustine",
+    feastDay: "Aug 28",
+    feastMonth: 8,
+    category: "Mercy",
+    era: "Early Church",
+    tags: ["service", "charity", "embodied"],
+    source: "Sermon",
+  },
+  {
+    id: 24,
+    text: "You cannot be half a saint; you must be a whole saint.",
+    saint: "St. Therese of Lisieux",
+    feastDay: "Oct 1",
+    feastMonth: 10,
+    category: "Discipline",
+    era: "Modern",
+    tags: ["holiness", "resolve", "daily"],
+    source: "Letters",
+  },
+  {
+    id: 25,
+    text: "Miss no single opportunity of making some small sacrifice.",
+    saint: "St. Therese of Lisieux",
+    feastDay: "Oct 1",
+    feastMonth: 10,
+    category: "Discipline",
+    era: "Modern",
+    tags: ["sacrifice", "daily", "love"],
+    source: "Story of a Soul",
+  },
+  {
+    id: 26,
+    text: "Start by doing what is necessary, then what is possible.",
+    saint: "St. Francis of Assisi",
+    feastDay: "Oct 4",
+    feastMonth: 10,
+    category: "Discipline",
+    era: "Middle Ages",
+    tags: ["execution", "focus", "mission"],
+    source: "Tradition",
+  },
+  {
+    id: 27,
+    text: "Where there is hatred, let me sow love.",
+    saint: "St. Francis of Assisi",
+    feastDay: "Oct 4",
+    feastMonth: 10,
+    category: "Mercy",
+    era: "Middle Ages",
+    tags: ["reconciliation", "peace", "charity"],
+    source: "Prayer",
+  },
+  {
+    id: 28,
+    text: "The proof of love is in the works.",
+    saint: "St. Gregory the Great",
+    feastDay: "Sep 3",
+    feastMonth: 9,
+    category: "Love",
+    era: "Early Church",
+    tags: ["action", "charity", "integrity"],
+    source: "Homilies",
+  },
+  {
+    id: 29,
+    text: "A little mercy makes the world less cold and more just.",
+    saint: "Pope Francis",
+    category: "Mercy",
+    era: "Modern",
+    tags: ["mercy", "justice", "culture"],
+    source: "Misericordiae Vultus",
+  },
+  {
+    id: 30,
+    text: "To have courage for whatever comes in life, everything lies in that.",
+    saint: "St. Teresa of Avila",
+    feastDay: "Oct 15",
+    feastMonth: 10,
+    category: "Courage",
+    era: "Modern",
+    tags: ["fortitude", "resilience", "faith"],
+    source: "Letters",
+  },
+  {
+    id: 31,
+    text: "Do not let your hearts be troubled; trust in God.",
+    saint: "St. Faustina",
+    feastDay: "Oct 5",
+    feastMonth: 10,
+    category: "Hope",
+    era: "Modern",
+    tags: ["trust", "mercy", "consolation"],
+    source: "Diary",
+  },
+  {
+    id: 32,
+    text: "Jesus, I trust in You.",
+    saint: "St. Faustina",
+    feastDay: "Oct 5",
+    feastMonth: 10,
+    category: "Prayer",
+    era: "Modern",
+    tags: ["prayer", "trust", "devotion"],
+    source: "Diary",
+  },
+  {
+    id: 33,
+    text: "He who is not faithful in little things will not be faithful in great.",
+    saint: "St. Basil the Great",
+    feastDay: "Jan 2",
+    feastMonth: 1,
+    category: "Discipline",
+    era: "Early Church",
+    tags: ["fidelity", "habits", "virtue"],
+    source: "Rule",
+  },
+  {
+    id: 34,
+    text: "The glory of God is man fully alive.",
+    saint: "St. Irenaeus",
+    feastDay: "Jun 28",
+    feastMonth: 6,
+    category: "Joy",
+    era: "Early Church",
+    tags: ["life", "dignity", "purpose"],
+    source: "Against Heresies",
+  },
+  {
+    id: 35,
+    text: "Teach us to give and not to count the cost.",
+    saint: "St. Ignatius of Loyola",
+    feastDay: "Jul 31",
+    feastMonth: 7,
+    category: "Mercy",
+    era: "Modern",
+    tags: ["generosity", "mission", "surrender"],
+    source: "Suscipe",
+  },
+  {
+    id: 36,
+    text: "Go forth and set the world on fire.",
+    saint: "St. Ignatius of Loyola",
+    feastDay: "Jul 31",
+    feastMonth: 7,
+    category: "Courage",
+    era: "Modern",
+    tags: ["mission", "zeal", "evangelization"],
+    source: "Tradition",
+  },
+  {
+    id: 37,
+    text: "Humility is the foundation of all the virtues.",
+    saint: "St. Vincent de Paul",
+    feastDay: "Sep 27",
+    feastMonth: 9,
+    category: "Wisdom",
+    era: "Modern",
+    tags: ["humility", "virtue", "service"],
+    source: "Conferences",
+  },
+  {
+    id: 38,
+    text: "Do not seek to be understood, seek to understand.",
+    saint: "St. Francis of Assisi",
+    feastDay: "Oct 4",
+    feastMonth: 10,
+    category: "Mercy",
+    era: "Middle Ages",
+    tags: ["dialogue", "peace", "relationships"],
+    source: "Prayer",
+  },
+  {
+    id: 39,
+    text: "Who except God can give you peace? Has the world ever been able to satisfy the heart?",
+    saint: "St. Gerard Majella",
+    feastDay: "Oct 16",
+    feastMonth: 10,
+    category: "Wisdom",
+    era: "Modern",
+    tags: ["peace", "desire", "discernment"],
+    source: "Sayings",
+  },
+  {
+    id: 40,
+    text: "If every tiny flower wanted to be a rose, spring would lose its loveliness.",
+    saint: "St. Therese of Lisieux",
+    feastDay: "Oct 1",
+    feastMonth: 10,
+    category: "Joy",
+    era: "Modern",
+    tags: ["humility", "identity", "beauty"],
+    source: "Story of a Soul",
+  },
+];
+
+export const saintOptions = Array.from(new Set(quotes.map((quote) => quote.saint))).sort();
+
+export const categoryOptions = Array.from(
+  new Set(quotes.map((quote) => quote.category))
+) as QuoteCategory[];
+
+export const tagOptions = Array.from(
+  new Set(quotes.flatMap((quote) => quote.tags))
+).sort();
+
+export function getDailyQuoteIndex(date: Date = new Date()): number {
+  const dayOfYear = Math.floor(
+    (date.getTime() - new Date(date.getFullYear(), 0, 0).getTime()) /
+      1000 /
+      60 /
+      60 /
+      24
+  );
+
   return dayOfYear % quotes.length;
+}
+
+export function getDailyQuote(date: Date = new Date()): Quote {
+  return quotes[getDailyQuoteIndex(date)];
 }

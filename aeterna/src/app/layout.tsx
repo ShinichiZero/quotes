@@ -1,9 +1,10 @@
 import "./globals.css";
-import { Geist, Cormorant_Garamond } from "next/font/google";
+import { Cormorant_Garamond, Sora } from "next/font/google";
 
-const geistSans = Geist({
+const soraSans = Sora({
   variable: "--font-geist-sans",
   subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
 });
 
 const cormorant = Cormorant_Garamond({
@@ -14,7 +15,7 @@ const cormorant = Cormorant_Garamond({
 
 export const metadata = {
   title: "Aeterna | Ancient Wisdom",
-  description: "A premium $10,000-tier Saints Quote website.",
+  description: "Aeterna: premium saints quote intelligence with deep search, filters, and personal study tools.",
 };
 
 export default function RootLayout({
@@ -61,7 +62,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${geistSans.variable} ${cormorant.variable} antialiased bg-[#050505] text-white min-h-screen`}
+        className={`${soraSans.variable} ${cormorant.variable} antialiased bg-[#050505] text-white min-h-screen`}
       >
         <div className="fixed inset-0 min-h-screen z-[-1] pointer-events-none mesh-bg" />
         {children}

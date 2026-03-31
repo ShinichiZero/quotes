@@ -1,15 +1,31 @@
 @import "tailwindcss";
 
 @theme {
-  --color-brand-bg: #050505;
-  --color-brand-indigo: #1a1a2e;
-  --color-brand-gold: #2c2412;
+  --color-brand-bg: #080707;
+  --color-brand-indigo: #1a1712;
+  --color-brand-gold: #a27b45;
 }
 
 @layer base {
+  * {
+    box-sizing: border-box;
+  }
+
   body {
     background-color: var(--color-brand-bg);
     color: white;
+    letter-spacing: 0.01em;
+    text-rendering: geometricPrecision;
+  }
+
+  ::selection {
+    background: rgba(173, 132, 76, 0.42);
+    color: #f8f6f2;
+  }
+
+  html,
+  body {
+    min-height: 100%;
   }
 }
 
@@ -17,4 +33,32 @@
   background-image: radial-gradient(at 100% 0%, var(--color-brand-indigo) 0px, transparent 50%),
                     radial-gradient(at 0% 100%, var(--color-brand-gold) 0px, transparent 50%);
   background-attachment: fixed;
+}
+
+body::-webkit-scrollbar {
+  width: 10px;
+}
+
+body::-webkit-scrollbar-track {
+  background: #0b0b0b;
+}
+
+body::-webkit-scrollbar-thumb {
+  border: 2px solid #0b0b0b;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #9a7544 0%, #5a4630 100%);
+}
+
+@keyframes goldPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(173, 132, 76, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(173, 132, 76, 0);
+  }
+}
+
+.gold-pulse {
+  animation: goldPulse 2.4s ease-in-out infinite;
 }
